@@ -9,7 +9,7 @@ url='http://tools.suckless.org/slstatus'
 depends=('libx11')
 makedepends=('git')
 license=('custom:ISC')
-source=("git+https://git.suckless.org/${pkgname}")
+source=("https://github.com/aphorismenoi/${pkgname}.git")
 
 build() {
     cd "${pkgname}"
