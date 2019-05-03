@@ -169,7 +169,7 @@ main(void)
 		sng = getmpdstat();
 		
 		if (nmails == 0) {
-			status = smprintf("%s %s",sng, tmbln);
+			status = smprintf("%s %s", sng, tmbln);
 		}
 		else {
 			status = smprintf("%s %d new • %s", sng, nmails, tmbln);
