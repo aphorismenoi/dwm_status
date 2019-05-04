@@ -6,6 +6,7 @@ pkgrel=1
 pkgdesc='A status monitor for dwm'
 arch=('i686' 'x86_64')
 url="https://github.com/aphorismenoi/dwm_status"
+license=('GPL')
 depends=('libx11' 'libmpdclient')
 makedepends=('git')
 source=("git+https://github.com/aphorismenoi/${pkgname}.git")
