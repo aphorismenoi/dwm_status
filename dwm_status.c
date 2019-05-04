@@ -1,6 +1,7 @@
-//  Fichier: dwmstatus.c                   
-//  Crée le 10 déc. 2012 22:28:11
-//  Dernière modification: 21 déc. 2012 16:25:16
+/*
+ * dwm statusbar in C
+ * most snippets found here: http://dwm.suckless.org/status_monitor/
+ */
 
 #define _DEFAULT_SOURCE
 #define _GNU_SOURCE
@@ -18,8 +19,6 @@
 
 #include <X11/Xlib.h>
 #include <mpd/client.h>
-
-char *tzberlin = "Europe/Berlin";
 
 static Display *dpy;
 
@@ -39,20 +38,15 @@ smprintf(char *fmt, ...)
 	return buf;
 }
 
-void
-settz(char *tzname)
-{
-	setenv("TZ", tzname, 1);
-}
-     
 char *
-mktimes(char *fmt, char *tzname)
+get_clock(char *fmt)
 {
 	char buf[129];
 	time_t tim;
 	struct tm *timtm;
-     
-	settz(tzname);
+
+        setenv("TZ", "Europe/Berlin", 1);
+
 	tim = time(NULL);
 	timtm = localtime(&tim);
 	if (timtm == NULL)		
@@ -66,14 +60,14 @@ mktimes(char *fmt, char *tzname)
       	return smprintf("%s", buf);
 }
 
-/* simple function to retrieve mpd status */
 char *
-getmpdstat() {
+get_mpdstat() {
 	struct mpd_song * song = NULL;
 	const char * title = NULL;
 	const char * artist = NULL;
 	char * retstr = NULL;
 	int elapsed = 0, total = 0;
+
 	struct mpd_connection * conn ;
 	if (!(conn = mpd_connection_new("localhost", 0, 30000)) ||
 			mpd_connection_get_error(conn)){
@@ -98,15 +92,18 @@ getmpdstat() {
 		retstr = smprintf("%s - %s •", artist, title);
 		free((char*)title);
 		free((char*)artist);
-	}
-	else retstr = smprintf("");
+	} else {
+                retstr = smprintf("");
+        }
+
 	mpd_response_finish(conn);
 	mpd_connection_free(conn);
+
 	return retstr;
 }
 
 void
-setstatus(char *str)
+set_status(char *str)
 {
 	XStoreName(dpy, DefaultRootWindow(dpy), str);
 	XSync(dpy, False);
@@ -115,19 +112,15 @@ setstatus(char *str)
 int
 get_nmail(char *directory)
 {
-	/* directory : Maildir path 
-	 * return label : number_of_new_mails
-	 */
-
 	int n = 0;
 	DIR* dir = NULL;
 	struct dirent* rf = NULL;
 
-	dir = opendir(directory); /* try to open directory */
+	dir = opendir(directory);
 	if (dir == NULL)
 		perror("");
 
-	while ((rf = readdir(dir)) != NULL) /*count number of file*/
+	while ((rf = readdir(dir)) != NULL)
 	{
 		if (strcmp(rf->d_name, ".") != 0 &&
 				strcmp(rf->d_name, "..") != 0)
@@ -136,12 +129,6 @@ get_nmail(char *directory)
 	closedir(dir);
 	
 	return n;
-
-	/*if (n == 0) 
-		return smprintf("");
-	else 
-		return smprintf("%d %s",n , label); */
-
 }
 
 int
@@ -150,9 +137,7 @@ main(void)
 	char *status;
 	char *tmbln;
 	char *sng;
-	int g;
-        int p;
-        int nmails;
+	int g = 0, p = 0, nmails = 0;
 
 	if (!(dpy = XOpenDisplay(NULL))) {
 		fprintf(stderr, "dwmstatus: cannot open display.\n");
@@ -165,17 +150,16 @@ main(void)
 		p = get_nmail("/home/aphorismenoi/mail/posteo/INBOX/new");
                 nmails = g + p;
 
-		tmbln = mktimes("%a %d %H:%M", tzberlin);
-		sng = getmpdstat();
+		tmbln = get_clock("%a %d %H:%M");
+		sng = get_mpdstat();
 		
 		if (nmails == 0) {
 			status = smprintf("%s %s", sng, tmbln);
-		}
-		else {
+		} else {
 			status = smprintf("%s %d new • %s", sng, nmails, tmbln);
 		}
 
-		setstatus(status);
+		set_status(status);
 		free(status);
 	}
 
